@@ -16,6 +16,7 @@ public class Model extends Observable {
     private int maxScore;
     /** True iff game is ended. */
     private boolean gameOver;
+    private boolean[][] merged;
 
     /* Coordinate System: column C, row R of the board (where row 0,
      * column 0 is the lower-left corner of the board) will correspond
@@ -110,7 +111,17 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        // TODO: Modify this.board (and perhaps this.score) to account
+        board.setViewingPerspective(side);
+        merged = new boolean[board.size()][board.size()];
+        for (int c = 0; c < board.size(); c += 1){
+            for (int r = board.size() - 1; r >= 0; r -= 1){
+                Tile t = board.tile(c, r);
+                if (t != null){
+                    changed =  moveTilt(t, c, r) || changed;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
@@ -120,6 +131,29 @@ public class Model extends Observable {
         }
         return changed;
     }
+
+    public boolean moveTilt(Tile t, int c, int r) {
+        int cur_r = r;
+        while (cur_r + 1 < board.size() && board.tile(c, cur_r + 1) == null){
+            cur_r += 1;
+        }
+
+        Tile targetTile = null;
+        if (cur_r + 1 < board.size()) {
+            targetTile = board.tile(c, cur_r + 1);
+        }
+        if (targetTile != null && targetTile.value() == t.value()  && !merged[c][cur_r + 1]){
+            cur_r += 1;
+            score += t.value() * 2;
+            merged[c][cur_r] = true;
+        }
+        if (cur_r != r) {
+            board.move(c, cur_r, t);
+            return true;
+        }
+        return false;
+   }
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -137,7 +171,16 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        for (int col = 0; col < b.size(); col += 1)
+        {
+           for (int row = 0; row < b.size(); row += 1)
+           {
+               if (b.tile(col, row) == null)
+               {
+                   return true;
+               }
+           }
+        }
         return false;
     }
 
@@ -147,7 +190,16 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        for (int col = 0; col < b.size(); col += 1)
+        {
+            for (int row = 0; row < b.size(); row += 1)
+            {
+                if (GetValue(b.tile(col, row)) == MAX_PIECE)
+                {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,10 +210,47 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if (emptySpaceExists(b)) {
+            return true;
+        }
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                Tile t = b.tile(col, row);
+                for (int i = -1; i < 1; i += 2) {
+                    if (notHasBorder(col, row, i)) {
+                        if (GetValue(t) == GetValue(b.tile(col, row + i))) {
+                            return true;
+                        }
+                        if (GetValue(t) == GetValue(b.tile(col + i, row))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 
+    /** Get the value of a specific tilt. */
+    public static int GetValue(Tile t) {
+        int val = 0;
+        if (t != null) {
+            val = t.value();
+        }
+        return val;
+    }
+
+    /** Check whether the tilt is on the border. */
+    public static boolean notHasBorder(int col, int row, int i)
+    {
+       if (col + i < 0) {
+           return false;
+       }
+       if (row + i < 0) {
+           return false;
+       }
+       return true;
+    }
 
     @Override
      /** Returns the model as a string, used for debugging. */
