@@ -27,7 +27,7 @@ public class TimeAList {
         AList<Integer> opCounts = new AList<>();
 
         AList<Integer> list = new AList<>();
-        int MaxN = 10000000;
+        int MaxN = 128000;
         int MinN = 1000;
         for (int i = MinN; i <= MaxN; i *= 2){
             Stopwatch sw = new Stopwatch();
