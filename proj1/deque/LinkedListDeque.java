@@ -91,7 +91,7 @@ public class LinkedListDeque<T> {
         if (index == 0) {
             return sentHelper.item;
         } else {
-            return getHelper(index - 1, sentHelper.next)
+            return getHelper(index - 1, sentHelper.next);
         }
     }
 
