@@ -111,4 +111,21 @@ public class ArrayDequeTest {
             assertEquals("Should have the same value", i, (double) lld1.removeLast(), 0.0);
         }
     }
+
+    @Test
+    /* Add large number of elements to deque and try to get them */
+    public void bigADequeGetTest() {
+        ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
+        for (int i = 0; i < 1000000; i++) {
+            lld1.addLast(i);
+        }
+
+        for (int i = 0; i < 500000; i++) {
+            assertEquals("Should have the same value", i, (double) lld1.get(i), 0.0);
+        }
+
+        for (int i = 999999; i > 500000; i--) {
+            assertEquals("Should have the same value", i, (double) lld1.get(i), 0.0);
+        }
+    }
 }

@@ -111,4 +111,21 @@ public class LinkedListDequeTest {
             assertEquals("Should have the same value", i, (double) lld1.removeLast(), 0.0);
         }
     }
+
+    @Test
+    /* Add number of elements to deque and try to get them */
+    public void GetTest() {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        for (int i = 0; i < 1000; i++) {
+            lld1.addLast(i);
+        }
+
+        for (int i = 0; i < 500; i++) {
+            assertEquals("Should have the same value", i, (double) lld1.get(i), 0.0);
+        }
+
+        for (int i = 999; i > 500; i--) {
+            assertEquals("Should have the same value", i, (double) lld1.get(i), 0.0);
+        }
+    }
 }
