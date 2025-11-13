@@ -69,7 +69,7 @@ public class LinkedListDeque<T> {
     }
 
     public T get(int index) {
-        DequeNode indexNode = sentinel;
+        DequeNode indexNode = sentinel.next;
         if (index >= size) {
             return null;
         }
@@ -83,7 +83,7 @@ public class LinkedListDeque<T> {
         if (index >= size) {
             return null;
         }
-        DequeNode sentHelper = sentinel;
+        DequeNode sentHelper = sentinel.next;
         return getHelper(index, sentHelper);
     }
 
