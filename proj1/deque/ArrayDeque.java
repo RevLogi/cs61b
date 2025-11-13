@@ -102,6 +102,10 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index) {
+        if (index >= size || index < 0) {
+            return null;
+        }
+        index = index + nextFirst + 1;
         index = loop(index);
         return items[index];
     }

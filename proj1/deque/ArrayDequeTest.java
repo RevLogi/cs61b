@@ -128,4 +128,16 @@ public class ArrayDequeTest {
             assertEquals("Should have the same value", i, (double) lld1.get(i), 0.0);
         }
     }
+
+    @Test
+    public void smallADequeGetTest() {
+        ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
+        for (int i = 0; i < 5; i++) {
+            lld1.addLast(i);
+        }
+
+        for (int i = 0; i < 5; i++) {
+            assertEquals("Should have the same value", i, (double) lld1.get(i), 0.0);
+        }
+    }
 }
