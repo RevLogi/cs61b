@@ -138,12 +138,13 @@ public class ArrayDeque<T>  implements Deque<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof ArrayDeque oas) {
+        if (o instanceof ArrayDeque) {
+            ArrayDeque<T> oas = (ArrayDeque<T>) o;
             if (oas.size() != this.size()) {
                 return false;
             }
             for (int i = 0; i < this.size(); i += 1) {
-                if (this.get(i) != oas.get(i)) {
+                if (!this.get(i).equals(oas.get(i))) {
                     return false;
                 }
             }

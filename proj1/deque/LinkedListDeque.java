@@ -131,12 +131,13 @@ public class LinkedListDeque<T> implements Deque<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof LinkedListDeque oas) {
+        if (o instanceof LinkedListDeque) {
+            LinkedListDeque<T> oas = (LinkedListDeque<T>) o;
             if (oas.size() != this.size()) {
                 return false;
             }
             for (int i = 0; i < this.size(); i += 1) {
-                if (this.get(i) != oas.get(i)) {
+                if (!this.get(i).equals(oas.get(i))) {
                     return false;
                 }
             }
