@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T>  implements Deque<T> {
+public class ArrayDeque<T>  implements Deque<T>, Iterable<T> {
     private T[] items;
     private int size;
     private int nextFirst;
@@ -57,7 +57,7 @@ public class ArrayDeque<T>  implements Deque<T> {
         items[nextFirst] = null;
         size -= 1;
         if (items.length >= 16 && size * 4 < items.length) {
-            resize (items.length / 2);
+            resize(items.length / 2);
         }
         return returnValue;
     }
@@ -83,7 +83,7 @@ public class ArrayDeque<T>  implements Deque<T> {
         items[nextLast] = null;
         size -= 1;
         if (items.length >= 16 && size * 4 < items.length) {
-            resize (items.length / 2);
+            resize(items.length / 2);
         }
         return returnValue;
     }
