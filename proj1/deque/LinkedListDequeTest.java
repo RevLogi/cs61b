@@ -179,4 +179,19 @@ public class LinkedListDequeTest {
         assertTrue(lld1.equals(lld2));
         assertFalse(lld1.equals(lld3));
     }
+
+    @Test
+    /* Create a SLList and an ArrayList with same elements, then try to compare them */
+    public void differentDequeEqualTest() {
+        LinkedListDeque<Integer> lld = new LinkedListDeque<>();
+        ArrayDeque<Integer> ad = new ArrayDeque<>();
+
+        for (int i = 0; i < 10; i++) {
+            lld.addLast(i);
+            ad.addLast(i);
+        }
+
+        assertTrue(lld.equals(ad));
+        assertTrue(ad.equals(lld));
+    }
 }
