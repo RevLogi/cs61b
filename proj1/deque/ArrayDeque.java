@@ -1,6 +1,8 @@
 package deque;
 
-public class ArrayDeque<T> {
+import java.util.Iterator;
+
+public class ArrayDeque<T>  implements Deque<T> {
     private T[] items;
     private int size;
     private int nextFirst;
@@ -22,6 +24,7 @@ public class ArrayDeque<T> {
         }
         return curr;
     }
+
     private void resize(int capacity) {
         T[] a = (T[]) new Object[capacity];
         for (int i = 0; i < size; i += 1) {
@@ -33,6 +36,7 @@ public class ArrayDeque<T> {
         items = a;
     }
 
+    @Override
     public void addFirst(T item) {
         if (size == items.length) {
             resize(size * 2);
@@ -43,6 +47,7 @@ public class ArrayDeque<T> {
         size += 1;
     }
 
+    @Override
     public T removeFirst() {
         if (size == 0) {
             return null;
@@ -57,6 +62,7 @@ public class ArrayDeque<T> {
         return returnValue;
     }
 
+    @Override
     public void addLast(T item) {
         if (size == items.length) {
             resize(size * 2);
@@ -67,6 +73,7 @@ public class ArrayDeque<T> {
         size += 1;
     }
 
+    @Override
     public T removeLast() {
         if (size == 0) {
             return null;
@@ -81,14 +88,12 @@ public class ArrayDeque<T> {
         return returnValue;
     }
 
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
+    @Override
     public int size() {
         return size;
     }
 
+    @Override
     public void printDeque() {
         int curr = nextFirst + 1;
         for (int i = 0; i < size; i += 1) {
@@ -101,6 +106,7 @@ public class ArrayDeque<T> {
         }
     }
 
+    @Override
     public T get(int index) {
         if (index >= size || index < 0) {
             return null;
@@ -108,5 +114,41 @@ public class ArrayDeque<T> {
         index = index + nextFirst + 1;
         index = loop(index);
         return items[index];
+    }
+
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    private class ArrayDequeIterator implements Iterator<T> {
+        private int nextPos = 0;
+
+        @Override
+        public boolean hasNext() {
+            return nextPos < size;
+        }
+
+        @Override
+        public T next() {
+            T returnItem = get(nextPos);
+            nextPos += 1;
+            return returnItem;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof ArrayDeque oas) {
+            if (oas.size() != this.size()) {
+                return false;
+            }
+            for (int i = 0; i < this.size(); i += 1) {
+                if (this.get(i) != oas.get(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }

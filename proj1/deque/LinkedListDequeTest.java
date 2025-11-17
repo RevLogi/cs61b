@@ -145,4 +145,38 @@ public class LinkedListDequeTest {
             assertEquals("Should have the same value", i, (double) lld1.getRecursive(i), 0.0);
         }
     }
+
+    @Test
+    /* Add number of elements to deque and try to iterate through it */
+    public void iterateTest() {
+        LinkedListDeque<Integer> lld = new LinkedListDeque<>();
+        for (int i = 0; i < 10; i++) {
+            lld.addLast(i);
+        }
+
+        int k = 0;
+        for (int x : lld) {
+            assertEquals(x, k);
+            k++;
+        }
+    }
+
+    @Test
+    /* Create two SLList which have same elements and one with different elements, then try to compare them */
+    public void equalTest() {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        LinkedListDeque<Integer> lld2 = new LinkedListDeque<>();
+        LinkedListDeque<Integer> lld3 = new LinkedListDeque<>();
+
+        for (int i = 0; i < 10; i++) {
+            lld1.addLast(i);
+            lld2.addLast(i);
+        }
+        for (int i = 9; i >= 0; i--) {
+            lld3.addLast(i);
+        }
+
+        assertTrue(lld1.equals(lld2));
+        assertFalse(lld1.equals(lld3));
+    }
 }

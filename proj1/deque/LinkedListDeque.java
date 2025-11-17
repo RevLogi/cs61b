@@ -1,6 +1,8 @@
 package deque;
 
-public class LinkedListDeque<T> {
+import java.util.Iterator;
+
+public class LinkedListDeque<T> implements Deque<T> {
     private class DequeNode {
         public T item;
         public DequeNode prev;
@@ -23,13 +25,7 @@ public class LinkedListDeque<T> {
         size = 0;
     }
 
-    public boolean isEmpty() {
-        if (sentinel.next == sentinel && sentinel.prev == sentinel){
-            return true;
-        }
-        return false;
-    }
-
+    @Override
     public void addFirst(T item) {
         DequeNode n = new DequeNode(sentinel, item, sentinel.next);
         sentinel.next.prev = n;
@@ -37,6 +33,7 @@ public class LinkedListDeque<T> {
         size += 1;
     }
 
+    @Override
     public T removeFirst() {
         if (size > 0) {
             T returnValue = sentinel.next.item;
@@ -49,6 +46,7 @@ public class LinkedListDeque<T> {
         return null;
     }
 
+    @Override
     public void addLast(T item) {
         DequeNode n = new DequeNode(sentinel.prev, item, sentinel);
         sentinel.prev.next = n;
@@ -56,6 +54,7 @@ public class LinkedListDeque<T> {
         size += 1;
     }
 
+    @Override
     public T removeLast() {
         if (size > 0) {
             T returnValue = sentinel.prev.item;
@@ -68,6 +67,7 @@ public class LinkedListDeque<T> {
         return null;
     }
 
+    @Override
     public T get(int index) {
         DequeNode indexNode = sentinel.next;
         if (index >= size) {
@@ -95,6 +95,7 @@ public class LinkedListDeque<T> {
         }
     }
 
+    @Override
     public void printDeque() {
         DequeNode curr = sentinel;
         for (int i = 0; i < size; i += 1) {
@@ -103,7 +104,44 @@ public class LinkedListDeque<T> {
         }
     }
 
+    @Override
     public int size() {
         return size;
+    }
+
+    public Iterator<T> iterator() {
+        return new LinkedListDequeIterator();
+    }
+
+    private class LinkedListDequeIterator implements Iterator<T> {
+        private int nextPos = 0;
+
+        @Override
+        public boolean hasNext() {
+            return nextPos < size;
+        }
+
+        @Override
+        public T next() {
+            T returnItem = get(nextPos);
+            nextPos += 1;
+            return returnItem;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof LinkedListDeque oas) {
+            if (oas.size() != this.size()) {
+                return false;
+            }
+            for (int i = 0; i < this.size(); i += 1) {
+                if (this.get(i) != oas.get(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }
