@@ -1,6 +1,7 @@
 package capers;
 
 import java.io.File;
+import java.util.Arrays;
 
 import static capers.Utils.*;
 
@@ -42,7 +43,8 @@ public class Main {
         }
 
         CapersRepository.setupPersistence();
-        String text;
+        String text, birthday;
+        int age;
         switch (args[0]) {
         case "story":
             /* This call has been handled for you. The rest will be similar. */
@@ -52,11 +54,14 @@ public class Main {
             break;
         case "dog":
             validateNumArgs("dog", args, 4);
-            // TODO: make a dog
+            String name = args[1], breed = args[2];
+            age = Integer.parseInt(args[3]);
+            CapersRepository.makeDog(name, breed, age);
             break;
         case "birthday":
             validateNumArgs("birthday", args, 2);
-            // TODO: celebrate this dog's birthday
+            birthday = args[1];
+            CapersRepository.celebrateBirthday(birthday);
             break;
         default:
             exitWithError(String.format("Unknown command: %s", args[0]));
@@ -74,7 +79,7 @@ public class Main {
      */
     public static void validateNumArgs(String cmd, String[] args, int n) {
         if (args.length != n) {
-            throw new RuntimeException(
+            exitWithError(
                 String.format("Invalid number of arguments for: %s.", cmd));
         }
     }
