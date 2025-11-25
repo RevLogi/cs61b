@@ -11,6 +11,7 @@ import java.util.*;
  */
 public class MyHashMap<K, V> implements Map61B<K, V> {
     private static final int INIT_CAPACITY = 4;
+    private static double LOAD_FACTOR = 0.75;
 
 
     /**
@@ -29,8 +30,8 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     /* Instance Variables */
     private Collection<Node>[] buckets;
-    private int n; //number of key-value pairs
-    private int m; //hash table size
+    private int n; //items size
+    private int m; //buckets size
 
     /** Constructors */
     public MyHashMap() {
@@ -53,7 +54,10 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * @param initialSize initial size of backing array
      * @param maxLoad maximum load factor
      */
-    public MyHashMap(int initialSize, double maxLoad) { }
+    public MyHashMap(int initialSize, double maxLoad) {
+        this(initialSize);
+        LOAD_FACTOR = maxLoad;
+    }
 
     /**
      * Returns a new node to be placed in a hash table bucket
@@ -160,7 +164,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
             throw new IllegalArgumentException();
         }
         Node node = new Node(key, value);
-        if (n >= 0.75*m) {
+        if (n >= LOAD_FACTOR*m) {
             resize(2*m);
         }
         int i = hash(key);
