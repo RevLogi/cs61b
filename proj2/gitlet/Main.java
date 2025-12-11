@@ -84,8 +84,7 @@ public class Main {
                 } else if (args.length == 4 && args[2].equals("--")){
                     Repository.checkFile(args[1], args[3]);
                 } else {
-                    System.out.println("Incorrect operands");
-                    System.exit(0);
+                    incorrectOps();
                 }
                 break;
             case "branch":
@@ -93,6 +92,24 @@ public class Main {
                     incorrectOps();
                 }
                 Repository.branch(args[1]);
+                break;
+            case "rm-branch":
+                if (args.length != 2) {
+                    incorrectOps();
+                }
+                Repository.rmBranch(args[1]);
+                break;
+            case "reset":
+                if (args.length != 2) {
+                    incorrectOps();
+                }
+                Repository.reset(args[1]);
+                break;
+            case "merge":
+                if (args.length != 2) {
+                    incorrectOps();
+                }
+                Repository.merge(args[1]);
                 break;
 
             default:

@@ -8,6 +8,7 @@ import java.util.Date; // TODO: You'll likely use this in this class
 import java.io.Serializable;
 import java.util.Formatter;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -31,12 +32,14 @@ public class Commit implements Serializable {
     private String message;
     private Date timeStamp;
     private String parentHash;
+    private String anotherParenHash;
     private HashMap<String, String> blobs;
 
     public Commit() {
         this.timeStamp = new Date(0);
         this.message = "initial commit";
         this.parentHash = null;
+        this.anotherParenHash = null;
         this.blobs = new HashMap<>();
         CM_DIR.mkdirs();
         // Create the master branch
@@ -51,8 +54,9 @@ public class Commit implements Serializable {
         this.timeStamp = new Date();
         this.message = message;
         this.parentHash = Branch.currHash();
+        this.anotherParenHash = null;
         // Get the blobs of prev commit
-        this.blobs = Commit.currCommit().blobs;
+        this.blobs = new HashMap<>(Commit.currCommit().blobs);
         // Add the blobs in staging area into current commit
         File index = join(SA_DIR, "index");
         StagingArea currArea = readObject(index, StagingArea.class);
@@ -69,6 +73,10 @@ public class Commit implements Serializable {
                 this.blobs.put(fileName, blobHashName);
             }
         }
+    }
+
+    public void addNewParent(String parentHash2) {
+        this.anotherParenHash = parentHash2;
     }
 
     public void removedFile(HashMap<String, String> addedFiles) {
@@ -120,6 +128,17 @@ public class Commit implements Serializable {
         System.out.println();
     }
 
+    /** Get all the ancestors of a commit by its hash and add them into a HashSet. */
+    public static HashSet<String> getAncestors(HashSet<String> currAncestors, String hash) {
+        currAncestors.add(hash);
+        Commit currCommit = getCommit(hash);
+        if (currCommit.parentHash == null) {
+            return currAncestors;
+        } else {
+            return getAncestors(currAncestors, currCommit.parentHash);
+        }
+    }
+
     /** Find the specific commit according to its message. */
     public static void find(String message) {
         boolean i = false;
@@ -163,5 +182,21 @@ public class Commit implements Serializable {
     public static HashMap<String, String> getBlob(String hash) {
         Commit currCommit = getCommit(hash);
         return currCommit.blobs;
+    }
+
+    public HashSet<String> getParentHash() {
+        HashSet<String> parentHash = new HashSet<>();
+        parentHash.add(this.parentHash);
+        if (this.anotherParenHash != null) {
+            parentHash.add(this.anotherParenHash);
+        }
+        return parentHash;
+    }
+
+    public static String readCommitContent(String fileName, String hash) {
+        HashMap<String, String> blobs = getBlob(hash);
+        String hashName = blobs.get(fileName);
+        File targetFile = join(OB_DIR, hashName);
+        return readContentsAsString(targetFile);
     }
 }

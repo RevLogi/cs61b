@@ -71,6 +71,11 @@ public class Repository {
         StagingArea.clear();
     }
 
+    public static void mergeCommit(String message, String parentHash2) {
+        Commit newCommit = new Commit(message);
+        newCommit.addNewParent(parentHash2);
+    }
+
     public static void remove(String fileName) {
         File rmFile = join(CWD, fileName);
         if (rmFile.exists()) {
@@ -155,11 +160,11 @@ public class Repository {
 
     public static void replaceFile (HashMap<String, String> currBlob, String fileName) {
         String fileHash = currBlob.get(fileName);
-        File file = join(OB_DIR, fileHash);
-        if (!file.exists()) {
+        if (fileHash == null) {
             System.out.println("File does not exist in that commit.");
             System.exit(0);
         }
+        File file = join(OB_DIR, fileHash);
         String contents = readContentsAsString(file);
         File replacedFile = join(CWD, fileName);
         if (!replacedFile.exists()) {
@@ -207,5 +212,78 @@ public class Repository {
         Branch.branch(branchName);
         String hash = Branch.currHash();
         Branch.update(branchName, hash);
+    }
+
+    public static void rmBranch(String branchName) {
+        Branch.remove(branchName);
+    }
+
+    public static void reset(String commitHash) {
+        String currBranch = Branch.getHead();
+        Branch.update(currBranch, commitHash);
+        checkCommit(currBranch);
+        StagingArea.clear();
+    }
+
+    public static void merge(String branchName) {
+        StagingArea sa = new StagingArea();
+        HashMap<String, String> addedFile = sa.getAddedFile();
+        if (addedFile.isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+        File branchFile = join(HEAD_DIR, branchName);
+        if (!branchFile.exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String currBranchName = Branch.getHead();
+        String currHash = Branch.currHash();
+        String givenHash = readContentsAsString(branchFile);
+        String splitHash = Branch.splitPoint(givenHash, currHash);
+        Set<String> allFile = new HashSet<>();
+        HashMap<String, String> cBlobs = Commit.getBlob(currHash);
+        HashMap<String, String> gBlobs = Commit.getBlob(givenHash);
+        HashMap<String, String> sBlobs = Commit.getBlob(splitHash);
+        allFile.addAll(cBlobs.keySet());
+        allFile.addAll(gBlobs.keySet());
+        allFile.addAll(sBlobs.keySet());
+        boolean currentChanged = false;
+        boolean givenChanged = false;
+        boolean differentChange = false;
+        Set<String> differentFile = new HashSet<>();
+        Set<String> givenChangedFile = new HashSet<>();
+        for (String fileName : allFile) {
+            if (!cBlobs.get(fileName).equals(gBlobs.get(fileName))) {
+                differentChange = true;
+                differentFile.add(fileName);
+            }
+            if ((!cBlobs.get(fileName).equals(sBlobs.get(fileName))) || cBlobs.get(fileName) == null) {
+                currentChanged = true;
+            }
+            if ((!gBlobs.get(fileName).equals(sBlobs.get(fileName))) || gBlobs.get(fileName) == null) {
+                givenChanged = true;
+                givenChangedFile.add(fileName);
+            }
+        }
+        if (givenChanged && !currentChanged) {
+            checkCommit(branchName);
+            for (String fileName : givenChangedFile) {
+                add(fileName);
+            }
+            commit("Merged" + branchName + "into" + currBranchName);
+        }
+        if (currentChanged && differentChange && givenChanged) {
+            for (String fileName : differentFile) {
+                File mergeFile = join(CWD, fileName);
+                String currContent = Commit.readCommitContent(fileName, currHash);
+                String givenContent = Commit.readCommitContent(fileName, givenHash);
+                String conflictContent = "<<<<<<< HEAD\n" + currContent + "=======\n" + givenContent + ">>>>>>>\n";
+                writeContents(mergeFile, conflictContent);
+                Repository.add(fileName);
+                Repository.mergeCommit("Merged" + branchName + "into" + currBranchName, givenHash);
+            }
+            System.out.println("Encountered a merge conflict.");
+        }
     }
 }
