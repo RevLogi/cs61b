@@ -23,6 +23,10 @@ public class Branch {
     /** Create a new branch with a branchName. */
     public static void branch(String branchName) {
         File branchFile = join(HEAD_DIR, branchName);
+        if (branchFile.exists()) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
         try {
             branchFile.createNewFile();
         } catch (IOException e) {

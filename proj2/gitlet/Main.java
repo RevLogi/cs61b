@@ -43,6 +43,9 @@ public class Main {
                     System.exit(0);
                 } else if (args.length != 2) {
                     incorrectOps();
+                } else if (args[1].equals("")) {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
                 }
                 Repository.commit(args[1]);
                 break;

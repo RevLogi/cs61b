@@ -53,6 +53,8 @@ public class StagingArea implements Serializable {
                 throw new RuntimeException(e);
             }
             writeContents(newFile, contents);
+        } else {
+            addedFile.remove(fileName);
         }
     }
 

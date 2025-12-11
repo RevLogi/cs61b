@@ -193,11 +193,7 @@ public class Repository {
         for (String fileName : blobs.keySet()) {
             File dirFile = join(CWD, fileName);
             if (dirFile.exists()) {
-                String dirContents = readContentsAsString(dirFile);
-                String currFileHash = currBlobs.get(fileName);
-                File currFile = join(OB_DIR, currFileHash);
-                String currContents = readContentsAsString(currFile);
-                if (!currContents.equals(dirContents)) {
+                if (!currBlobs.containsKey(fileName)) {
                     System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
