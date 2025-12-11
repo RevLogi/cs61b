@@ -35,6 +35,7 @@ public class StagingArea implements Serializable {
 
     public static void clear() {
         StagingArea initialArea = new StagingArea();
+        initialArea.addedFile = new HashMap<>();
         initialArea.save();
     }
 
