@@ -19,16 +19,18 @@ public class StagingArea implements Serializable {
     public StagingArea() {
         File index = join(SA_DIR, "index");
         if (index.exists()) {
-            StagingArea prev = readObject(index, StagingArea.class);
-            if (prev.addedFile == null) {
-                this.addedFile = new HashMap<>();
-            } else {
+            try {
+                StagingArea prev = readObject(index, StagingArea.class);
                 this.addedFile = prev.addedFile;
-            }
-            if (prev.removedFile == null) {
+                if (prev.removedFile == null) {
+                    this.removedFile = new HashSet<>();
+                } else {
+                    this.removedFile = prev.removedFile;
+                }
+            } catch (IllegalArgumentException e) {
+                // If readObject fails (corruption), start fresh to avoid crash
+                this.addedFile = new HashMap<>();
                 this.removedFile = new HashSet<>();
-            } else {
-                this.removedFile = prev.removedFile;
             }
         } else {
             this.addedFile = new HashMap<>();
