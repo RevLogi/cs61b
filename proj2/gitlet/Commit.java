@@ -6,6 +6,7 @@ import java.util.Date; // TODO: You'll likely use this in this class
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -166,6 +167,15 @@ public class Commit implements Serializable {
             System.exit(0);
         }
         return readObject(currCommitFile, Commit.class);
+    }
+
+    public static String findFullHash(String hash) {
+        List<String> allCommit = plainFilenamesIn(OB_DIR);
+        for (String realHash : allCommit) {
+            if (realHash.startsWith(hash)) {
+                return realHash;
+            }
+        }
     }
 
     /** Get the blobs of current commit. */

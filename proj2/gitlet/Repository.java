@@ -162,6 +162,9 @@ public class Repository {
     }
 
     public static void checkFile(String commitHash, String fileName) {
+        if (commitHash.length() < 40) {
+            commitHash = Commit.findFullHash(commitHash);
+        }
         HashMap<String, String> currBlob = Commit.getBlob(commitHash);
         replaceFile(currBlob, fileName);
     }
@@ -258,7 +261,8 @@ public class Repository {
         // Check Staging Area
         StagingArea sa = new StagingArea();
         HashMap<String, String> addedFile = sa.getAddedFile();
-        if (!addedFile.isEmpty()) {
+        HashSet<String> removedFile = sa.getRemovedFile();
+        if (!addedFile.isEmpty() || !removedFile.isEmpty()) {
             System.out.println("You have uncommitted changes.");
             System.exit(0);
         }
