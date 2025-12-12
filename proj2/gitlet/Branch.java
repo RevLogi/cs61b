@@ -71,7 +71,7 @@ public class Branch {
         writeContents(HEAD, curBranch);
     }
 
-    public static String getHead(){
+    public static String getHead() {
         return readContentsAsString(HEAD);
     }
 

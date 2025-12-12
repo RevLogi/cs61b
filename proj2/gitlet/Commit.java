@@ -2,7 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date; // TODO: You'll likely use this in this class
+import java.util.Date;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,15 +12,12 @@ import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author TODO
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
@@ -114,7 +111,8 @@ public class Commit implements Serializable {
     public static void logPrint(String hash) {
         Commit currCommit = getCommit(hash);
         String commitMessage = currCommit.message;
-        String date = String.format(java.util.Locale.US, "Date: %1$ta %1$tb %1$te %1$tT %1$tY %1$tz", currCommit.timeStamp);
+        String dateFormat = "Date: %1$ta %1$tb %1$te %1$tT %1$tY %1$tz";
+        String date = String.format(java.util.Locale.US, dateFormat, currCommit.timeStamp);
         System.out.println("===");
         System.out.print("commit ");
         System.out.println(hash);
@@ -127,10 +125,12 @@ public class Commit implements Serializable {
     public static HashSet<String> getAncestors(HashSet<String> currAncestors, String hash) {
         currAncestors.add(hash);
         Commit currCommit = getCommit(hash);
-        if (currCommit.parentHash != null && !currAncestors.contains(currCommit.parentHash)) {
+        String parentHash = currCommit.parentHash;
+        String anotherParenHash = currCommit.anotherParenHash;
+        if (parentHash != null && !currAncestors.contains(parentHash)) {
             getAncestors(currAncestors, currCommit.parentHash);
         }
-        if (currCommit.anotherParenHash != null && !currAncestors.contains(currCommit.anotherParenHash)) {
+        if (anotherParenHash != null && !currAncestors.contains(anotherParenHash)) {
             getAncestors(currAncestors, currCommit.anotherParenHash);
         }
         return currAncestors;

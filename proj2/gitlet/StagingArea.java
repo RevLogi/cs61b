@@ -20,7 +20,11 @@ public class StagingArea implements Serializable {
         File index = join(SA_DIR, "index");
         if (index.exists()) {
             StagingArea prev = readObject(index, StagingArea.class);
-            addedFile = prev.addedFile;
+            if (prev.addedFile == null) {
+                this.addedFile = new HashMap<>();
+            } else {
+                this.addedFile = prev.addedFile;
+            }
             if (prev.removedFile == null) {
                 this.removedFile = new HashSet<>();
             } else {
@@ -51,7 +55,7 @@ public class StagingArea implements Serializable {
      * Add new file into SA.
      */
     public void add(String fileName, String blobHashName, String contents) {
-        HashMap blobs = Commit.currBlobs();
+        HashMap<String, String> blobs = Commit.currBlobs();
         // No longer be staged for removal
         if (removedFile.contains(fileName)) {
             removedFile.remove(fileName);
@@ -69,6 +73,7 @@ public class StagingArea implements Serializable {
             }
             writeContents(newFile, contents);
         } else {
+            // Handle the case: a file is changed back to original version
             addedFile.remove(fileName);
         }
     }
@@ -77,7 +82,7 @@ public class StagingArea implements Serializable {
      * Remove file in SA or add a file to remove file in commit.
      */
     public void remove(String fileName) {
-        HashMap blobs = Commit.currBlobs();
+        HashMap<String, String> blobs = Commit.currBlobs();
         File rmFile = join(CWD, fileName);
         if (blobs.containsKey(fileName)) {
             removedFile.add(fileName);

@@ -6,18 +6,13 @@ import java.util.*;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author TODO
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
@@ -39,7 +34,8 @@ public class Repository {
     public static void init() {
         // Check if it is already initialized
         if (GITLET_DIR.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            String message = "A Gitlet version-control system already exists in the current directory.";
+            System.out.println(message);
             System.exit(0);
         }
         // Initialize the .gitlet
@@ -216,14 +212,15 @@ public class Repository {
             File dirFile = join(CWD, fileName);
             if (dirFile.exists()) {
                 if (!currBlobs.containsKey(fileName)) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    String message = "There is an untracked file in the way; delete it, or add and commit it first.";
+                    System.out.println(message);
                     System.exit(0);
                 }
             }
         }
         // If there is no untracked file, then replace
         for (String fileName : blobs.keySet()) {
-            replaceFile (blobs, fileName);
+            replaceFile(blobs, fileName);
         }
         // Delete verbose files
         for (String fileName : currBlobs.keySet()) {
@@ -311,7 +308,8 @@ public class Repository {
         for (String fileName: allFile) {
             File mergeFile = join(CWD, fileName);
             if (mergeFile.exists() && !cBlobs.containsKey(fileName)) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                String message = "There is an untracked file in the way; delete it, or add and commit it first.";
+                System.out.println(message);
                 System.exit(0);
             }
         }
