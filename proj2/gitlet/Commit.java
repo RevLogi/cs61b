@@ -133,7 +133,7 @@ public class Commit implements Serializable {
         currAncestors.add(hash);
         Commit currCommit = getCommit(hash);
         if (currCommit.parentHash != null && !currAncestors.contains(currCommit.parentHash)) {
-            getAncestors(currAncestors, currCommit.parentHash));
+            getAncestors(currAncestors, currCommit.parentHash);
         }
         if (currCommit.anotherParenHash != null && !currAncestors.contains(currCommit.anotherParenHash)) {
             getAncestors(currAncestors, currCommit.anotherParenHash);
