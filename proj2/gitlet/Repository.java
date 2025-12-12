@@ -79,16 +79,9 @@ public class Repository {
     }
 
     public static void remove(String fileName) {
-        File rmFile = join(CWD, fileName);
-        if (rmFile.exists()) {
-            String contents = readContentsAsString(rmFile);
-            String blobHashName = sha1(contents);
-            StagingArea stage = new StagingArea();
-            stage.remove(fileName, blobHashName, rmFile);
-            stage.save();
-        } else {
-            noFile();
-        }
+        StagingArea stage = new StagingArea();
+        stage.remove(fileName);
+        stage.save();
     }
 
     public static void log() {
@@ -131,21 +124,24 @@ public class Repository {
         StagingArea currArea = readObject(index, StagingArea.class);
         HashMap<String, String> addedFile = currArea.getAddedFile();
         Set<String> files = addedFile.keySet();
+        Set<String> rmFiles = currArea.getRemovedFile();
         List<String> fileList = new ArrayList<>(files);
+        List<String> rmFileList = new ArrayList<>(rmFiles);
         Collections.sort(fileList);
-        List<String> removedFileList = new ArrayList<>();
+        Collections.sort(rmFileList);
+
+        // Print the staged files
         for (String fileName : fileList) {
             File file = join(CWD, fileName);
             if (file.exists()) {
                 System.out.println(fileName);
-            } else {
-                removedFileList.add(fileName);
             }
         }
         System.out.println();
 
+        // Print the removedFile
         System.out.println("=== Removed Files ===");
-        for (String rmFileName : removedFileList) {
+        for (String rmFileName : rmFileList) {
             System.out.println(rmFileName);
         }
         System.out.println();
@@ -201,6 +197,11 @@ public class Repository {
             System.exit(0);
         }
         String commitHash = readContentsAsString(branchFile);
+        checkAllFiles(commitHash);
+        Branch.head(branchName);
+    }
+
+    public static void checkAllFiles(String commitHash) {
         HashMap<String, String> currBlobs = Commit.currBlobs();
         HashMap<String, String> blobs = Commit.getBlob(commitHash);
         // Check for untracked file
@@ -213,7 +214,7 @@ public class Repository {
                 }
             }
         }
-        // If there is no untracked file, then relace
+        // If there is no untracked file, then replace
         for (String fileName : blobs.keySet()) {
             replaceFile (blobs, fileName);
         }
@@ -226,7 +227,6 @@ public class Repository {
                 }
             }
         }
-        Branch.head(branchName);
         StagingArea.clear();
     }
 
@@ -241,9 +241,16 @@ public class Repository {
     }
 
     public static void reset(String commitHash) {
+        File cmFile = join(CM_DIR, commitHash);
+        if (!cmFile.exists()) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        // Update files
+        checkAllFiles(commitHash);
+        // Update pointer
         String currBranch = Branch.getHead();
         Branch.update(currBranch, commitHash);
-        checkCommit(currBranch);
         StagingArea.clear();
     }
 
@@ -331,7 +338,7 @@ public class Repository {
                 add(fileName);
             }
         }
-        String message = "Merged " + branchName + "into " + currBranchName + ".";
+        String message = "Merged " + branchName + " into " + currBranchName + ".";
         mergeCommit(message, givenHash);
 
         if (conflict) {

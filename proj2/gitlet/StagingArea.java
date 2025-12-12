@@ -4,13 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 
-import static gitlet.Repository.OB_DIR;
-import static gitlet.Repository.SA_DIR;
+import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
 public class StagingArea implements Serializable {
     private HashMap<String, String> addedFile;
+    private HashSet<String> removedFile;
 
     /**
      * Loading the prev SA.
@@ -20,8 +21,14 @@ public class StagingArea implements Serializable {
         if (index.exists()) {
             StagingArea prev = readObject(index, StagingArea.class);
             addedFile = prev.addedFile;
+            if (prev.removedFile == null) {
+                this.removedFile = new HashSet<>();
+            } else {
+                this.removedFile = prev.removedFile;
+            }
         } else {
             this.addedFile = new HashMap<>();
+            this.removedFile = new HashSet<>();
         }
     }
 
@@ -36,6 +43,7 @@ public class StagingArea implements Serializable {
     public static void clear() {
         StagingArea initialArea = new StagingArea();
         initialArea.addedFile = new HashMap<>();
+        initialArea.removedFile = new HashSet<>();
         initialArea.save();
     }
 
@@ -44,11 +52,18 @@ public class StagingArea implements Serializable {
      */
     public void add(String fileName, String blobHashName, String contents) {
         HashMap blobs = Commit.currBlobs();
+        // No longer be staged for removal
+        if (removedFile.contains(fileName)) {
+            removedFile.remove(fileName);
+        }
+        // Check if the adding file is same as commit version
         if (!blobs.containsKey(fileName) || !blobs.get(fileName).equals(blobHashName)) {
             addedFile.put(fileName, blobHashName);
             File newFile = join(OB_DIR, blobHashName);
             try {
-                newFile.createNewFile();
+                if (!newFile.exists()) {
+                    newFile.createNewFile();
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -61,11 +76,12 @@ public class StagingArea implements Serializable {
     /**
      * Remove file in SA or add a file to remove file in commit.
      */
-    public void remove(String fileName, String blobHashName, File rmFile) {
+    public void remove(String fileName) {
         HashMap blobs = Commit.currBlobs();
+        File rmFile = join(CWD, fileName);
         if (blobs.containsKey(fileName)) {
-            addedFile.put(fileName, blobHashName);
-            rmFile.delete();
+            removedFile.add(fileName);
+            Utils.restrictedDelete(rmFile);
         } else if (addedFile.containsKey(fileName)) {
             addedFile.remove(fileName);
         } else {
@@ -84,5 +100,9 @@ public class StagingArea implements Serializable {
 
     public HashMap<String, String> getAddedFile() {
         return addedFile;
+    }
+
+    public HashSet<String> getRemovedFile() {
+        return removedFile;
     }
 }

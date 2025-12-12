@@ -1,12 +1,9 @@
 package gitlet;
 
-// TODO: any imports you need here
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Date; // TODO: You'll likely use this in this class
 import java.io.Serializable;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -61,11 +58,13 @@ public class Commit implements Serializable {
         File index = join(SA_DIR, "index");
         StagingArea currArea = readObject(index, StagingArea.class);
         HashMap<String, String> addedFiles = currArea.getAddedFile();
-        removedFile(addedFiles);
-        if (addedFiles.isEmpty()) {
+        HashSet<String> removedFiles = currArea.getRemovedFile();
+        // Check if empty commit
+        if (addedFiles.isEmpty() && removedFiles.isEmpty()) {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
+        // Handle addition
         for (String fileName : addedFiles.keySet()) {
             File file = join(CWD, fileName);
             if (file.exists()) {
@@ -73,19 +72,14 @@ public class Commit implements Serializable {
                 this.blobs.put(fileName, blobHashName);
             }
         }
+        // Handle deletion
+        for (String fileName : removedFiles) {
+            this.blobs.remove(fileName);
+        }
     }
 
     public void addNewParent(String parentHash2) {
         this.anotherParenHash = parentHash2;
-    }
-
-    public void removedFile(HashMap<String, String> addedFiles) {
-        for (String fileName : addedFiles.keySet()) {
-            File file = join(CWD, fileName);
-            if (!file.exists()) {
-                this.blobs.remove(fileName);
-            }
-        }
     }
 
     /** Create a commit object inside a file named by its hash code. */
