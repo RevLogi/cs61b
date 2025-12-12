@@ -34,8 +34,8 @@ public class Repository {
     public static void init() {
         // Check if it is already initialized
         if (GITLET_DIR.exists()) {
-            String message = "A Gitlet version-control system already exists in the current directory.";
-            System.out.println(message);
+            String msg = "A Gitlet version-control system already exists in the current directory.";
+            System.out.println(msg);
             System.exit(0);
         }
         // Initialize the .gitlet
@@ -169,7 +169,7 @@ public class Repository {
         replaceFile(currBlob, fileName);
     }
 
-    public static void replaceFile (HashMap<String, String> currBlob, String fileName) {
+    public static void replaceFile(HashMap<String, String> currBlob, String fileName) {
         String fileHash = currBlob.get(fileName);
         if (fileHash == null) {
             System.out.println("File does not exist in that commit.");
@@ -212,8 +212,8 @@ public class Repository {
             File dirFile = join(CWD, fileName);
             if (dirFile.exists()) {
                 if (!currBlobs.containsKey(fileName)) {
-                    String message = "There is an untracked file in the way; delete it, or add and commit it first.";
-                    System.out.println(message);
+                    String msg = "There is an untracked file in the way; delete it, or add and commit it first.";
+                    System.out.println(msg);
                     System.exit(0);
                 }
             }
@@ -285,6 +285,10 @@ public class Repository {
         String currHash = Branch.currHash();
         String givenHash = readContentsAsString(branchFile);
         String splitHash = Branch.splitPoint(givenHash, currHash);
+        if (currBranchName.equals(branchName)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
         if (splitHash.equals(givenHash)) {
             System.out.println("Given branch is an ancestor of the current branch.");
             System.exit(0);
