@@ -132,11 +132,13 @@ public class Commit implements Serializable {
     public static HashSet<String> getAncestors(HashSet<String> currAncestors, String hash) {
         currAncestors.add(hash);
         Commit currCommit = getCommit(hash);
-        if (currCommit.parentHash == null) {
-            return currAncestors;
-        } else {
-            return getAncestors(currAncestors, currCommit.parentHash);
+        if (currCommit.parentHash != null && !currAncestors.contains(currCommit.parentHash)) {
+            getAncestors(currAncestors, currCommit.parentHash));
         }
+        if (currCommit.anotherParenHash != null && !currAncestors.contains(currCommit.anotherParenHash)) {
+            getAncestors(currAncestors, currCommit.anotherParenHash);
+        }
+        return currAncestors;
     }
 
     /** Find the specific commit according to its message. */

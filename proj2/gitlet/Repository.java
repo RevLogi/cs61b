@@ -74,6 +74,8 @@ public class Repository {
     public static void mergeCommit(String message, String parentHash2) {
         Commit newCommit = new Commit(message);
         newCommit.addNewParent(parentHash2);
+        newCommit.create();
+        StagingArea.clear();
     }
 
     public static void remove(String fileName) {
@@ -123,6 +125,7 @@ public class Repository {
             }
         }
         System.out.println();
+
         System.out.println("=== Staged Files ===");
         File index = join(SA_DIR, "index");
         StagingArea currArea = readObject(index, StagingArea.class);
@@ -140,10 +143,19 @@ public class Repository {
             }
         }
         System.out.println();
+
         System.out.println("=== Removed Files ===");
         for (String rmFileName : removedFileList) {
             System.out.println(rmFileName);
         }
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        // Not implemented yet
+        System.out.println();
+
+        System.out.println("=== Untracked Files ===");
+        // Not implemented yet
         System.out.println();
     }
 
@@ -186,10 +198,12 @@ public class Repository {
         String head = Branch.getHead();
         if (branchName.equals(head)) {
             System.out.println("No need to checkout the current branch.");
+            System.exit(0);
         }
         String commitHash = readContentsAsString(branchFile);
         HashMap<String, String> currBlobs = Commit.currBlobs();
         HashMap<String, String> blobs = Commit.getBlob(commitHash);
+        // Check for untracked file
         for (String fileName : blobs.keySet()) {
             File dirFile = join(CWD, fileName);
             if (dirFile.exists()) {
@@ -198,7 +212,19 @@ public class Repository {
                     System.exit(0);
                 }
             }
+        }
+        // If there is no untracked file, then relace
+        for (String fileName : blobs.keySet()) {
             replaceFile (blobs, fileName);
+        }
+        // Delete verbose files
+        for (String fileName : currBlobs.keySet()) {
+            if (!blobs.containsKey(fileName)) {
+                File file = join(CWD, fileName);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
         }
         Branch.head(branchName);
         StagingArea.clear();
@@ -222,21 +248,34 @@ public class Repository {
     }
 
     public static void merge(String branchName) {
+        // Check Staging Area
         StagingArea sa = new StagingArea();
         HashMap<String, String> addedFile = sa.getAddedFile();
-        if (addedFile.isEmpty()) {
+        if (!addedFile.isEmpty()) {
             System.out.println("You have uncommitted changes.");
             System.exit(0);
         }
+        // Check if branch exists
         File branchFile = join(HEAD_DIR, branchName);
         if (!branchFile.exists()) {
             System.out.println("A branch with that name does not exist.");
             System.exit(0);
         }
+        // Check if it is a real split
         String currBranchName = Branch.getHead();
         String currHash = Branch.currHash();
         String givenHash = readContentsAsString(branchFile);
         String splitHash = Branch.splitPoint(givenHash, currHash);
+        if (splitHash.equals(givenHash)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        }
+        if (splitHash.equals(currHash)) {
+            checkCommit(branchName);
+            System.out.println("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+        // Collect all the file names
         Set<String> allFile = new HashSet<>();
         HashMap<String, String> cBlobs = Commit.getBlob(currHash);
         HashMap<String, String> gBlobs = Commit.getBlob(givenHash);
@@ -244,42 +283,69 @@ public class Repository {
         allFile.addAll(cBlobs.keySet());
         allFile.addAll(gBlobs.keySet());
         allFile.addAll(sBlobs.keySet());
-        boolean currentChanged = false;
-        boolean givenChanged = false;
-        boolean differentChange = false;
-        Set<String> differentFile = new HashSet<>();
-        Set<String> givenChangedFile = new HashSet<>();
-        for (String fileName : allFile) {
-            if (!cBlobs.get(fileName).equals(gBlobs.get(fileName))) {
-                differentChange = true;
-                differentFile.add(fileName);
-            }
-            if ((!cBlobs.get(fileName).equals(sBlobs.get(fileName))) || cBlobs.get(fileName) == null) {
-                currentChanged = true;
-            }
-            if ((!gBlobs.get(fileName).equals(sBlobs.get(fileName))) || gBlobs.get(fileName) == null) {
-                givenChanged = true;
-                givenChangedFile.add(fileName);
+
+        boolean conflict = false;
+        // Check for untracked file
+        for (String fileName: allFile) {
+            File mergeFile = join(CWD, fileName);
+            if (mergeFile.exists() && !cBlobs.containsKey(fileName)) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
             }
         }
-        if (givenChanged && !currentChanged) {
-            checkCommit(branchName);
-            for (String fileName : givenChangedFile) {
+        // Iterate per file
+        for (String fileName : allFile) {
+            String cVal = cBlobs.get(fileName);
+            String gVal = gBlobs.get(fileName);
+            String sVal = sBlobs.get(fileName);
+
+            if (isSame(sVal, cVal) && !isSame(sVal, gVal)) {
+                if (gVal == null) {
+                    remove(fileName);
+                } else {
+                    checkFile(givenHash, fileName);
+                    add(fileName);
+                }
+                continue;
+            }
+            if (isSame(gVal, sVal) && !isSame(sVal, cVal)) {
+                continue;
+            }
+            if (!isSame(gVal, cVal)) {
+                conflict = true;
+                String currContent;
+                String givenContent;
+                if (cVal == null) {
+                    currContent = "";
+                } else {
+                    currContent = Commit.readCommitContent(fileName, currHash);
+                }
+                if (gVal == null) {
+                    givenContent = "";
+                } else {
+                    givenContent = Commit.readCommitContent(fileName, givenHash);
+                }
+                String conflictContent = "<<<<<<< HEAD\n" + currContent + "=======\n" + givenContent + ">>>>>>>\n";
+                File mergeFile = join(CWD, fileName);
+                writeContents(mergeFile, conflictContent);
                 add(fileName);
             }
-            commit("Merged" + branchName + "into" + currBranchName);
         }
-        if (currentChanged && differentChange && givenChanged) {
-            for (String fileName : differentFile) {
-                File mergeFile = join(CWD, fileName);
-                String currContent = Commit.readCommitContent(fileName, currHash);
-                String givenContent = Commit.readCommitContent(fileName, givenHash);
-                String conflictContent = "<<<<<<< HEAD\n" + currContent + "=======\n" + givenContent + ">>>>>>>\n";
-                writeContents(mergeFile, conflictContent);
-                Repository.add(fileName);
-                Repository.mergeCommit("Merged" + branchName + "into" + currBranchName, givenHash);
-            }
+        String message = "Merged " + branchName + "into " + currBranchName + ".";
+        mergeCommit(message, givenHash);
+
+        if (conflict) {
             System.out.println("Encountered a merge conflict.");
         }
+    }
+
+    private static boolean isSame(String val1, String val2) {
+        if (val1 == null && val2 == null) {
+            return true;
+        }
+        if (val1 == null || val2 == null) {
+            return false;
+        }
+        return val1.equals(val2);
     }
 }
