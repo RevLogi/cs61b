@@ -170,12 +170,13 @@ public class Commit implements Serializable {
     }
 
     public static String findFullHash(String hash) {
-        List<String> allCommit = plainFilenamesIn(OB_DIR);
+        List<String> allCommit = plainFilenamesIn(CM_DIR);
         for (String realHash : allCommit) {
             if (realHash.startsWith(hash)) {
                 return realHash;
             }
         }
+        return null;
     }
 
     /** Get the blobs of current commit. */
@@ -192,7 +193,9 @@ public class Commit implements Serializable {
 
     public HashSet<String> getParentHash() {
         HashSet<String> parentHash = new HashSet<>();
-        parentHash.add(this.parentHash);
+        if (this.parentHash != null) {
+            parentHash.add(this.parentHash);
+        }
         if (this.anotherParenHash != null) {
             parentHash.add(this.anotherParenHash);
         }

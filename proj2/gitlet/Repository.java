@@ -164,6 +164,10 @@ public class Repository {
     public static void checkFile(String commitHash, String fileName) {
         if (commitHash.length() < 40) {
             commitHash = Commit.findFullHash(commitHash);
+            if (commitHash == null) {
+                System.out.println("No commit with that id exists.");
+                System.exit(0);
+            }
         }
         HashMap<String, String> currBlob = Commit.getBlob(commitHash);
         replaceFile(currBlob, fileName);
@@ -244,6 +248,13 @@ public class Repository {
     }
 
     public static void reset(String commitHash) {
+        if (commitHash.length() < 40) {
+            commitHash = Commit.findFullHash(commitHash);
+            if (commitHash == null) {
+                System.out.println("No commit with that id exists.");
+                System.exit(0);
+            }
+        }
         File cmFile = join(CM_DIR, commitHash);
         if (!cmFile.exists()) {
             System.out.println("No commit with that id exists.");
