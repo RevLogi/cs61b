@@ -190,14 +190,14 @@ public class Commit implements Serializable {
     }
 
     public HashSet<String> getParentHash() {
-        HashSet<String> parentHash = new HashSet<>();
+        HashSet<String> parentHashes = new HashSet<>();
         if (this.parentHash != null) {
-            parentHash.add(this.parentHash);
+            parentHashes.add(this.parentHash);
         }
         if (this.anotherParenHash != null) {
-            parentHash.add(this.anotherParenHash);
+            parentHashes.add(this.anotherParenHash);
         }
-        return parentHash;
+        return parentHashes;
     }
 
     public static String readCommitContent(String fileName, String hash) {

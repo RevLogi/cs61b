@@ -35,8 +35,8 @@ public class Repository {
     public static void init() {
         // Check if it is already initialized
         if (GITLET_DIR.exists()) {
-            String msg = "A Gitlet version-control system " +
-                    "already exists in the current directory.";
+            String msg = "A Gitlet version-control system "
+                    + "already exists in the current directory.";
             throw error(msg);
         }
         // Initialize the .gitlet
@@ -135,14 +135,14 @@ public class Repository {
         return fileList;
     }
 
-   private static List<String> getRemovedFile() {
-       File index = join(SA_DIR, "index");
-       StagingArea currArea = readObject(index, StagingArea.class);
-       Set<String> rmFiles = currArea.getRemovedFile();
-       List<String> rmFileList = new ArrayList<>(rmFiles);
-       Collections.sort(rmFileList);
-       return rmFileList;
-   }
+    private static List<String> getRemovedFile() {
+        File index = join(SA_DIR, "index");
+        StagingArea currArea = readObject(index, StagingArea.class);
+        Set<String> rmFiles = currArea.getRemovedFile();
+        List<String> rmFileList = new ArrayList<>(rmFiles);
+        Collections.sort(rmFileList);
+        return rmFileList;
+    }
 
     private static void printBranches() {
         String head = Branch.getHead();
@@ -203,7 +203,8 @@ public class Repository {
         for (String fileName : blobFiles) {
             List<String> rmFiles = getRemovedFile();
             File file = join(CWD, fileName);
-            // Tracked in the current commit and deleted from the CWD without being staged for removal
+            // Tracked in the current commit and deleted from the CWD
+            // without being staged for removal
             if (!file.exists() && !rmFiles.contains(fileName)) {
                 System.out.println(fileName + " (deleted)");
             }
@@ -223,7 +224,7 @@ public class Repository {
         // Get all the filenames in current commit
         HashMap<String, String> currBlobs = Commit.currBlobs();
         Set<String> blobFiles = currBlobs.keySet();
-        
+
         for (String fileName : plainFilenamesIn(CWD)) {
             List<String> files = getFiles();
             List<String> rmFiles = getRemovedFile();
@@ -292,8 +293,8 @@ public class Repository {
             File dirFile = join(CWD, fileName);
             if (dirFile.exists()) {
                 if (!currBlobs.containsKey(fileName)) {
-                    String msg = "There is an untracked file in the way; " +
-                            "delete it, or add and commit it first.";
+                    String msg = "There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.";
                     throw error(msg);
                 }
             }
@@ -377,8 +378,8 @@ public class Repository {
         for (String fileName: allFile) {
             File mergeFile = join(CWD, fileName);
             if (mergeFile.exists() && !cBlobs.containsKey(fileName)) {
-                String message = "There is an untracked file in the way; " +
-                        "delete it, or add and commit it first.";
+                String message = "There is an untracked file in the way; "
+                        + "delete it, or add and commit it first.";
                 throw error(message);
             }
         }
