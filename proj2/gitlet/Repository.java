@@ -31,14 +31,6 @@ public class Repository {
     public static final File HEAD_DIR = join(GITLET_DIR, "refs", "heads");
     public static final File HEAD = join(GITLET_DIR, "HEAD");
 
-    // Get the added and removed files and sort them by their filenames
-    private static File index = join(SA_DIR, "index");
-    private static StagingArea currArea = readObject(index, StagingArea.class);
-    private static HashMap<String, String> addedFile = currArea.getAddedFile();
-    private static Set<String> files = addedFile.keySet();
-    private static Set<String> rmFiles = currArea.getRemovedFile();
-    private static List<String> fileList = new ArrayList<>(files);
-    private static List<String> rmFileList = new ArrayList<>(rmFiles);
     // Get all the filenames in current commit
     private static HashMap<String, String> currBlobs = Commit.currBlobs();
     private static Set<String> blobFiles = currBlobs.keySet();
@@ -112,21 +104,17 @@ public class Repository {
     }
 
     public static void status() {
+
         System.out.println("=== Branches ===");
         printBranches();
-        System.out.println();
-
-        Collections.sort(fileList);
-        Collections.sort(rmFileList);
 
         // Print the staged files
         System.out.println("=== Staged Files ===");
-        printStagedFiles(fileList);
+        printStagedFiles();
 
         // Print the removedFile
         System.out.println("=== Removed Files ===");
-        printRemovedFiles(rmFileList);
-
+        printRemovedFiles();
 
         System.out.println("=== Modifications Not Staged For Commit ===");
         printNotStaged();
@@ -134,6 +122,30 @@ public class Repository {
         System.out.println("=== Untracked Files ===");
         printUntracked();
     }
+
+    private static HashMap<String, String> getAddedFiles() {
+        // Get the added and removed files and sort them by their filenames
+        File index = join(SA_DIR, "index");
+        StagingArea currArea = readObject(index, StagingArea.class);
+        return currArea.getAddedFile();
+    }
+
+    private static List<String> getFiles() {
+        HashMap<String, String> addedFile = getAddedFiles();
+        Set<String> files =  addedFile.keySet();
+        List<String> fileList = new ArrayList<>(files);
+        Collections.sort(fileList);
+        return fileList;
+    }
+
+   private static List<String> getRemovedFile() {
+       File index = join(SA_DIR, "index");
+       StagingArea currArea = readObject(index, StagingArea.class);
+       Set<String> rmFiles = currArea.getRemovedFile();
+       List<String> rmFileList = new ArrayList<>(rmFiles);
+       Collections.sort(rmFileList);
+       return rmFileList;
+   }
 
     private static void printBranches() {
         String head = Branch.getHead();
@@ -147,9 +159,11 @@ public class Repository {
                 System.out.println(branchName);
             }
         }
+        System.out.println();
     }
 
-    private static void printStagedFiles(List<String> fileList) {
+    private static void printStagedFiles() {
+        List<String> fileList = getFiles();
         for (String fileName : fileList) {
             File file = join(CWD, fileName);
             if (file.exists()) {
@@ -159,7 +173,8 @@ public class Repository {
         System.out.println();
     }
 
-    private static void printRemovedFiles(List<String> rmFileList) {
+    private static void printRemovedFiles() {
+        List<String> rmFileList = getRemovedFile();
         for (String rmFileName : rmFileList) {
             System.out.println(rmFileName);
         }
@@ -167,6 +182,8 @@ public class Repository {
     }
 
     private static void printNotStaged() {
+        HashMap<String, String> addedFile = getAddedFiles();
+        List<String> files = getFiles();
         for (String fileName : files) {
             File file = join(CWD, fileName);
             // Staged for addition, but deleted in the CWD
@@ -183,6 +200,7 @@ public class Repository {
             }
         }
         for (String fileName : blobFiles) {
+            List<String> rmFiles = getRemovedFile();
             File file = join(CWD, fileName);
             // Tracked in the current commit and deleted from the CWD without being staged for removal
             if (!file.exists() && !rmFiles.contains(fileName)) {
@@ -202,6 +220,8 @@ public class Repository {
 
     private static void printUntracked() {
         for (String fileName : plainFilenamesIn(CWD)) {
+            List<String> files = getFiles();
+            List<String> rmFiles = getRemovedFile();
             if (!files.contains(fileName)
                     && (!blobFiles.contains(fileName) || rmFiles.contains(fileName))) {
                 System.out.println(fileName);
