@@ -56,7 +56,7 @@ public class StagingArea implements Serializable {
     /**
      * Add new file into SA.
      */
-    public void add(String fileName, String blobHashName, String contents) {
+    public void add(String fileName, String blobHashName, byte[] contents) {
         HashMap<String, String> blobs = Commit.currBlobs();
         // No longer be staged for removal
         if (removedFile.contains(fileName)) {

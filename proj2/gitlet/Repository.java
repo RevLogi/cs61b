@@ -35,8 +35,7 @@ public class Repository {
         // Check if it is already initialized
         if (GITLET_DIR.exists()) {
             String msg = "A Gitlet version-control system already exists in the current directory.";
-            System.out.println(msg);
-            System.exit(0);
+            throw error(msg);
         }
         // Initialize the .gitlet
         GITLET_DIR.mkdirs();
@@ -50,7 +49,7 @@ public class Repository {
     public static void add(String fileName) {
         File newFile = join(CWD, fileName);
         if (newFile.exists()) {
-            String contents = readContentsAsString(newFile);
+            byte[] contents = readContents(newFile);
             String blobHashName = sha1(contents);
             StagingArea stage = new StagingArea();
             stage.add(fileName, blobHashName, contents);
@@ -92,8 +91,7 @@ public class Repository {
     }
 
     public static void noFile() {
-        System.out.println("File does not exist.");
-        System.exit(0);
+        throw error("File does not exist.");
     }
 
     public static void find(String message) {
@@ -115,7 +113,7 @@ public class Repository {
         }
         System.out.println();
 
-        System.out.println("=== Staged Files ===");
+        // Get the added and removed files and sort them by their filenames
         File index = join(SA_DIR, "index");
         StagingArea currArea = readObject(index, StagingArea.class);
         HashMap<String, String> addedFile = currArea.getAddedFile();
@@ -127,6 +125,7 @@ public class Repository {
         Collections.sort(rmFileList);
 
         // Print the staged files
+        System.out.println("=== Staged Files ===");
         for (String fileName : fileList) {
             File file = join(CWD, fileName);
             if (file.exists()) {
@@ -142,12 +141,49 @@ public class Repository {
         }
         System.out.println();
 
+        // Get all the filenames in current commit
+        HashMap<String, String> currBlobs = Commit.currBlobs();
+        Set<String> blobFiles = currBlobs.keySet();
+
         System.out.println("=== Modifications Not Staged For Commit ===");
-        // Not implemented yet
+        for (String fileName : files) {
+            File file = join(CWD, fileName);
+            // Staged for addition, but deleted in the CWD
+            if (!file.exists()) {
+                System.out.println(fileName + " (deleted)");
+            }
+            // Staged for addition, but changed again in the CWD
+            if (file.exists()) {
+                String currContent = readContentsAsString(file);
+                String currHash = sha1(currContent);
+                if (!addedFile.get(fileName).equals(currHash)) {
+                    System.out.println(fileName + " (modified)");
+                }
+            }
+        }
+        for (String fileName : blobFiles) {
+            File file = join(CWD, fileName);
+            // Tracked in the current commit and deleted from the CWD without being staged for removal
+            if (!file.exists() && !rmFiles.contains(fileName)) {
+                System.out.println(fileName + " (deleted)");
+            }
+            // Tracked in the current commit, changed in the CWD, but not staged.
+            if (file.exists()) {
+                String currContent = readContentsAsString(file);
+                String currHash = sha1(currContent);
+                if (!files.contains(fileName) && !currBlobs.get(fileName).equals(currHash)) {
+                    System.out.println(fileName + " (modified)");
+                }
+            }
+        }
         System.out.println();
 
         System.out.println("=== Untracked Files ===");
-        // Not implemented yet
+        for (String fileName : plainFilenamesIn(CWD)) {
+            if (!files.contains(fileName) && (!blobFiles.contains(fileName) || rmFiles.contains(fileName))) {
+                System.out.println(fileName);
+            }
+        }
         System.out.println();
     }
 
@@ -161,8 +197,7 @@ public class Repository {
         if (commitHash.length() < 40) {
             commitHash = Commit.findFullHash(commitHash);
             if (commitHash == null) {
-                System.out.println("No commit with that id exists.");
-                System.exit(0);
+                throw error("No commit with that id exists.");
             }
         }
         HashMap<String, String> currBlob = Commit.getBlob(commitHash);
@@ -172,11 +207,10 @@ public class Repository {
     public static void replaceFile(HashMap<String, String> currBlob, String fileName) {
         String fileHash = currBlob.get(fileName);
         if (fileHash == null) {
-            System.out.println("File does not exist in that commit.");
-            System.exit(0);
+            throw error("File does not exist in that commit.");
         }
         File file = join(OB_DIR, fileHash);
-        String contents = readContentsAsString(file);
+        byte[] contents = readContents(file);
         File replacedFile = join(CWD, fileName);
         if (!replacedFile.exists()) {
             try {
@@ -191,13 +225,11 @@ public class Repository {
     public static void checkCommit(String branchName) {
         File branchFile = join(HEAD_DIR, branchName);
         if (!branchFile.exists()) {
-            System.out.println("No such branch exists.");
-            System.exit(0);
+            throw error("No such branch exists.");
         }
         String head = Branch.getHead();
         if (branchName.equals(head)) {
-            System.out.println("No need to checkout the current branch.");
-            System.exit(0);
+            throw error("No need to checkout the current branch.");
         }
         String commitHash = readContentsAsString(branchFile);
         checkAllFiles(commitHash);
@@ -213,8 +245,7 @@ public class Repository {
             if (dirFile.exists()) {
                 if (!currBlobs.containsKey(fileName)) {
                     String msg = "There is an untracked file in the way; delete it, or add and commit it first.";
-                    System.out.println(msg);
-                    System.exit(0);
+                    throw error(msg);
                 }
             }
         }
@@ -248,14 +279,12 @@ public class Repository {
         if (commitHash.length() < 40) {
             commitHash = Commit.findFullHash(commitHash);
             if (commitHash == null) {
-                System.out.println("No commit with that id exists.");
-                System.exit(0);
+                throw error("No commit with that id exists.");
             }
         }
         File cmFile = join(CM_DIR, commitHash);
         if (!cmFile.exists()) {
-            System.out.println("No commit with that id exists.");
-            System.exit(0);
+            throw error("No commit with that id exists.");
         }
         // Update files
         checkAllFiles(commitHash);
@@ -268,35 +297,22 @@ public class Repository {
     public static void merge(String branchName) {
         // Check Staging Area
         StagingArea sa = new StagingArea();
-        HashMap<String, String> addedFile = sa.getAddedFile();
-        HashSet<String> removedFile = sa.getRemovedFile();
-        if (!addedFile.isEmpty() || !removedFile.isEmpty()) {
-            System.out.println("You have uncommitted changes.");
-            System.exit(0);
-        }
-        // Check if branch exists
+        checkMergeFail(branchName, sa);
         File branchFile = join(HEAD_DIR, branchName);
-        if (!branchFile.exists()) {
-            System.out.println("A branch with that name does not exist.");
-            System.exit(0);
-        }
         // Check if it is a real split
         String currBranchName = Branch.getHead();
         String currHash = Branch.currHash();
         String givenHash = readContentsAsString(branchFile);
         String splitHash = Branch.splitPoint(givenHash, currHash);
         if (currBranchName.equals(branchName)) {
-            System.out.println("Cannot merge a branch with itself.");
-            System.exit(0);
+            throw error("Cannot merge a branch with itself.");
         }
         if (splitHash.equals(givenHash)) {
-            System.out.println("Given branch is an ancestor of the current branch.");
-            System.exit(0);
+            throw error("Given branch is an ancestor of the current branch.");
         }
         if (splitHash.equals(currHash)) {
             checkCommit(branchName);
-            System.out.println("Current branch fast-forwarded.");
-            System.exit(0);
+            throw error("Current branch fast-forwarded.");
         }
         // Collect all the file names
         Set<String> allFile = new HashSet<>();
@@ -313,8 +329,7 @@ public class Repository {
             File mergeFile = join(CWD, fileName);
             if (mergeFile.exists() && !cBlobs.containsKey(fileName)) {
                 String message = "There is an untracked file in the way; delete it, or add and commit it first.";
-                System.out.println(message);
-                System.exit(0);
+                throw error(message);
             }
         }
         // Iterate per file
@@ -349,7 +364,9 @@ public class Repository {
                 } else {
                     givenContent = Commit.readCommitContent(fileName, givenHash);
                 }
-                String conflictContent = "<<<<<<< HEAD\n" + currContent + "=======\n" + givenContent + ">>>>>>>\n";
+                String conflictContent = "<<<<<<< HEAD\n" + currContent
+                                       + "=======\n" + givenContent
+                                       + ">>>>>>>\n";
                 File mergeFile = join(CWD, fileName);
                 writeContents(mergeFile, conflictContent);
                 add(fileName);
@@ -358,8 +375,25 @@ public class Repository {
         String message = "Merged " + branchName + " into " + currBranchName + ".";
         mergeCommit(message, givenHash);
 
+        mergeConflict(conflict);
+    }
+
+    private static void mergeConflict (boolean conflict) {
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static void checkMergeFail (String branchName, StagingArea sa) {
+        HashMap<String, String> addedFile = sa.getAddedFile();
+        HashSet<String> removedFile = sa.getRemovedFile();
+        if (!addedFile.isEmpty() || !removedFile.isEmpty()) {
+            throw error("You have uncommitted changes.");
+        }
+        // Check if branch exists
+        File branchFile = join(HEAD_DIR, branchName);
+        if (!branchFile.exists()) {
+            throw error("A branch with that name does not exist.");
         }
     }
 

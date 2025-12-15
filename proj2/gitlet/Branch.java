@@ -24,8 +24,7 @@ public class Branch {
     public static void branch(String branchName) {
         File branchFile = join(HEAD_DIR, branchName);
         if (branchFile.exists()) {
-            System.out.println("A branch with that name already exists.");
-            System.exit(0);
+            throw error("A branch with that name already exists.");
         }
         try {
             branchFile.createNewFile();
@@ -48,13 +47,11 @@ public class Branch {
     public static void remove(String branch) {
         File branchFile = join(HEAD_DIR, branch);
         if (!branchFile.exists()) {
-            System.out.println("A branch with that name does not exist.");
-            System.exit(0);
+            throw error("A branch with that name does not exist.");
         }
         String head = getHead();
         if (head.equals(branch)) {
-            System.out.println("Cannot remove the current branch.");
-            System.exit(0);
+            throw error("Cannot remove the current branch.");
         }
         branchFile.delete();
     }

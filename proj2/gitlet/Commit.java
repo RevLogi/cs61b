@@ -2,11 +2,8 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
+import java.util.*;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -14,7 +11,7 @@ import static gitlet.Utils.*;
 /** Represents a gitlet commit object.
  *  does at a high level.
  *
- *  @author TODO
+ *  @author RevLogi
  */
 public class Commit implements Serializable {
     /**
@@ -59,8 +56,7 @@ public class Commit implements Serializable {
         HashSet<String> removedFiles = currArea.getRemovedFile();
         // Check if empty commit
         if (addedFiles.isEmpty() && removedFiles.isEmpty()) {
-            System.out.println("No changes added to the commit.");
-            System.exit(0);
+            throw error("No changes added to the commit.");
         }
         // Handle addition
         for (String fileName : addedFiles.keySet()) {
@@ -121,17 +117,21 @@ public class Commit implements Serializable {
         System.out.println();
     }
 
-    /** Get all the ancestors of a commit by its hash and add them into a HashSet. */
-    public static HashSet<String> getAncestors(HashSet<String> currAncestors, String hash) {
-        currAncestors.add(hash);
-        Commit currCommit = getCommit(hash);
-        String parentHash = currCommit.parentHash;
-        String anotherParenHash = currCommit.anotherParenHash;
-        if (parentHash != null && !currAncestors.contains(parentHash)) {
-            getAncestors(currAncestors, currCommit.parentHash);
-        }
-        if (anotherParenHash != null && !currAncestors.contains(anotherParenHash)) {
-            getAncestors(currAncestors, currCommit.anotherParenHash);
+    /** Use BFS to get all the ancestors of a commit by its hash and add them into a HashSet. */
+    public static HashSet<String> getAncestors(HashSet<String> currAncestors, String currHash) {
+        currAncestors.add(currHash);
+        Queue<String> queue = new LinkedList<>();
+        queue.add(currHash);
+        while (!queue.isEmpty()) {
+            String hash = queue.remove();
+            Commit commit = Commit.getCommit(hash);
+            HashSet<String> parents = commit.getParentHash();
+            for (String pHash : parents) {
+                if (!currAncestors.contains(pHash)) {
+                    currAncestors.add(pHash);
+                    queue.addAll(parents);
+                }
+            }
         }
         return currAncestors;
     }
@@ -148,8 +148,7 @@ public class Commit implements Serializable {
             }
         }
         if (!i) {
-            System.out.println("Found no commit with that message.");
-            System.exit(0);
+            throw error("Found no commit with that message.");
         }
     }
 
@@ -163,8 +162,7 @@ public class Commit implements Serializable {
     public static Commit getCommit(String hash) {
         File currCommitFile = join(CM_DIR, hash);
         if (!currCommitFile.exists()) {
-            System.out.println("No commit with that id exists.");
-            System.exit(0);
+            throw error("No commit with that id exists.");
         }
         return readObject(currCommitFile, Commit.class);
     }
