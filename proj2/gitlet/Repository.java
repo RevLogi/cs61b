@@ -31,10 +31,23 @@ public class Repository {
     public static final File HEAD_DIR = join(GITLET_DIR, "refs", "heads");
     public static final File HEAD = join(GITLET_DIR, "HEAD");
 
+    // Get the added and removed files and sort them by their filenames
+    private static File index = join(SA_DIR, "index");
+    private static StagingArea currArea = readObject(index, StagingArea.class);
+    private static HashMap<String, String> addedFile = currArea.getAddedFile();
+    private static Set<String> files = addedFile.keySet();
+    private static Set<String> rmFiles = currArea.getRemovedFile();
+    private static List<String> fileList = new ArrayList<>(files);
+    private static List<String> rmFileList = new ArrayList<>(rmFiles);
+    // Get all the filenames in current commit
+    private static HashMap<String, String> currBlobs = Commit.currBlobs();
+    private static Set<String> blobFiles = currBlobs.keySet();
+
     public static void init() {
         // Check if it is already initialized
         if (GITLET_DIR.exists()) {
-            String msg = "A Gitlet version-control system already exists in the current directory.";
+            String msg = "A Gitlet version-control system " +
+                    "already exists in the current directory.";
             throw error(msg);
         }
         // Initialize the .gitlet
@@ -100,6 +113,29 @@ public class Repository {
 
     public static void status() {
         System.out.println("=== Branches ===");
+        printBranches();
+        System.out.println();
+
+        Collections.sort(fileList);
+        Collections.sort(rmFileList);
+
+        // Print the staged files
+        System.out.println("=== Staged Files ===");
+        printStagedFiles(fileList);
+
+        // Print the removedFile
+        System.out.println("=== Removed Files ===");
+        printRemovedFiles(rmFileList);
+
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        printNotStaged();
+
+        System.out.println("=== Untracked Files ===");
+        printUntracked();
+    }
+
+    private static void printBranches() {
         String head = Branch.getHead();
         List<String> branchList = plainFilenamesIn(HEAD_DIR);
         if (branchList != null) {
@@ -111,21 +147,9 @@ public class Repository {
                 System.out.println(branchName);
             }
         }
-        System.out.println();
+    }
 
-        // Get the added and removed files and sort them by their filenames
-        File index = join(SA_DIR, "index");
-        StagingArea currArea = readObject(index, StagingArea.class);
-        HashMap<String, String> addedFile = currArea.getAddedFile();
-        Set<String> files = addedFile.keySet();
-        Set<String> rmFiles = currArea.getRemovedFile();
-        List<String> fileList = new ArrayList<>(files);
-        List<String> rmFileList = new ArrayList<>(rmFiles);
-        Collections.sort(fileList);
-        Collections.sort(rmFileList);
-
-        // Print the staged files
-        System.out.println("=== Staged Files ===");
+    private static void printStagedFiles(List<String> fileList) {
         for (String fileName : fileList) {
             File file = join(CWD, fileName);
             if (file.exists()) {
@@ -133,19 +157,16 @@ public class Repository {
             }
         }
         System.out.println();
+    }
 
-        // Print the removedFile
-        System.out.println("=== Removed Files ===");
+    private static void printRemovedFiles(List<String> rmFileList) {
         for (String rmFileName : rmFileList) {
             System.out.println(rmFileName);
         }
         System.out.println();
+    }
 
-        // Get all the filenames in current commit
-        HashMap<String, String> currBlobs = Commit.currBlobs();
-        Set<String> blobFiles = currBlobs.keySet();
-
-        System.out.println("=== Modifications Not Staged For Commit ===");
+    private static void printNotStaged() {
         for (String fileName : files) {
             File file = join(CWD, fileName);
             // Staged for addition, but deleted in the CWD
@@ -177,10 +198,12 @@ public class Repository {
             }
         }
         System.out.println();
+    }
 
-        System.out.println("=== Untracked Files ===");
+    private static void printUntracked() {
         for (String fileName : plainFilenamesIn(CWD)) {
-            if (!files.contains(fileName) && (!blobFiles.contains(fileName) || rmFiles.contains(fileName))) {
+            if (!files.contains(fileName)
+                    && (!blobFiles.contains(fileName) || rmFiles.contains(fileName))) {
                 System.out.println(fileName);
             }
         }
@@ -244,7 +267,8 @@ public class Repository {
             File dirFile = join(CWD, fileName);
             if (dirFile.exists()) {
                 if (!currBlobs.containsKey(fileName)) {
-                    String msg = "There is an untracked file in the way; delete it, or add and commit it first.";
+                    String msg = "There is an untracked file in the way; " +
+                            "delete it, or add and commit it first.";
                     throw error(msg);
                 }
             }
@@ -328,7 +352,8 @@ public class Repository {
         for (String fileName: allFile) {
             File mergeFile = join(CWD, fileName);
             if (mergeFile.exists() && !cBlobs.containsKey(fileName)) {
-                String message = "There is an untracked file in the way; delete it, or add and commit it first.";
+                String message = "There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.";
                 throw error(message);
             }
         }
@@ -352,18 +377,8 @@ public class Repository {
             }
             if (!isSame(gVal, cVal)) {
                 conflict = true;
-                String currContent;
-                String givenContent;
-                if (cVal == null) {
-                    currContent = "";
-                } else {
-                    currContent = Commit.readCommitContent(fileName, currHash);
-                }
-                if (gVal == null) {
-                    givenContent = "";
-                } else {
-                    givenContent = Commit.readCommitContent(fileName, givenHash);
-                }
+                String currContent = getContent(cVal, fileName, currHash);
+                String givenContent = getContent(gVal, fileName, givenHash);
                 String conflictContent = "<<<<<<< HEAD\n" + currContent
                                        + "=======\n" + givenContent
                                        + ">>>>>>>\n";
@@ -378,13 +393,21 @@ public class Repository {
         mergeConflict(conflict);
     }
 
-    private static void mergeConflict (boolean conflict) {
+    private static void mergeConflict(boolean conflict) {
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
         }
     }
 
-    private static void checkMergeFail (String branchName, StagingArea sa) {
+    private static String getContent(String val, String fileName, String hash) {
+        if (val == null) {
+            return "";
+        } else {
+            return Commit.readCommitContent(fileName, hash);
+        }
+    }
+
+    private static void checkMergeFail(String branchName, StagingArea sa) {
         HashMap<String, String> addedFile = sa.getAddedFile();
         HashSet<String> removedFile = sa.getRemovedFile();
         if (!addedFile.isEmpty() || !removedFile.isEmpty()) {
