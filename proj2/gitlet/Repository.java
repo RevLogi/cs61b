@@ -31,9 +31,6 @@ public class Repository {
     public static final File HEAD_DIR = join(GITLET_DIR, "refs", "heads");
     public static final File HEAD = join(GITLET_DIR, "HEAD");
 
-    // Get all the filenames in current commit
-    private static HashMap<String, String> currBlobs = Commit.currBlobs();
-    private static Set<String> blobFiles = currBlobs.keySet();
 
     public static void init() {
         // Check if it is already initialized
@@ -182,6 +179,10 @@ public class Repository {
     }
 
     private static void printNotStaged() {
+        // Get all the filenames in current commit
+        HashMap<String, String> currBlobs = Commit.currBlobs();
+        Set<String> blobFiles = currBlobs.keySet();
+
         HashMap<String, String> addedFile = getAddedFiles();
         List<String> files = getFiles();
         for (String fileName : files) {
@@ -219,6 +220,10 @@ public class Repository {
     }
 
     private static void printUntracked() {
+        // Get all the filenames in current commit
+        HashMap<String, String> currBlobs = Commit.currBlobs();
+        Set<String> blobFiles = currBlobs.keySet();
+        
         for (String fileName : plainFilenamesIn(CWD)) {
             List<String> files = getFiles();
             List<String> rmFiles = getRemovedFile();
