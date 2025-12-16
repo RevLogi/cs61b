@@ -10,6 +10,9 @@ import static gitlet.Utils.*;
 public class Remote {
     public Remote(String remoteName, String remotePath) {
         File newRemote = join(REMOTE_DIR, remoteName);
+        if (!REMOTE_DIR.exists()) {
+            REMOTE_DIR.mkdirs();
+        }
         if (newRemote.exists()) {
             throw error("A remote with that name already exists.");
         }
