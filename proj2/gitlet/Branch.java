@@ -74,8 +74,7 @@ public class Branch {
 
     /** Find the split point using the hash of the commit that given branch points at. */
     public static String splitPoint(String givenHash, String currHash) {
-        HashSet<String> currAncestors = new HashSet<>();
-        currAncestors = Commit.getAncestors(currAncestors, currHash);
+        HashSet<String> currAncestors = Commit.getAncestors(currHash);
         Queue<String> queue = new LinkedList<>();
         queue.add(givenHash);
         while (!queue.isEmpty()) {

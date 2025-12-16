@@ -118,7 +118,8 @@ public class Commit implements Serializable {
     }
 
     /** Use BFS to get all the ancestors of a commit by its hash and add them into a HashSet. */
-    public static HashSet<String> getAncestors(HashSet<String> currAncestors, String currHash) {
+    public static HashSet<String> getAncestors(String currHash) {
+        HashSet<String> currAncestors = new HashSet<>();
         currAncestors.add(currHash);
         Queue<String> queue = new LinkedList<>();
         queue.add(currHash);
@@ -129,7 +130,7 @@ public class Commit implements Serializable {
             for (String pHash : parents) {
                 if (!currAncestors.contains(pHash)) {
                     currAncestors.add(pHash);
-                    queue.addAll(parents);
+                    queue.add(pHash);
                 }
             }
         }

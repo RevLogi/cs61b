@@ -116,6 +116,24 @@ public class Main {
                     }
                     Repository.merge(args[1]);
                     break;
+                case "add-remote":
+                    if (args.length != 3) {
+                        incorrectOps();
+                    }
+                    Repository.addRemote(args[1], args[2]);
+                    break;
+                case "rm-remote":
+                    if (args.length != 2) {
+                        incorrectOps();
+                    }
+                    Repository.rmRemote(args[1]);
+                    break;
+                case "push":
+                    if (args.length != 3) {
+                        incorrectOps();
+                    }
+                    Repository.push(args[1], args[2]);
+                    break;
 
                 default:
                     System.out.println("No command with that name exists.");

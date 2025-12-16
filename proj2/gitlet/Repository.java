@@ -30,6 +30,8 @@ public class Repository {
     /** The branch directory. */
     public static final File HEAD_DIR = join(GITLET_DIR, "refs", "heads");
     public static final File HEAD = join(GITLET_DIR, "HEAD");
+    /** The remote directory. */
+    public static final File REMOTE_DIR = join(GITLET_DIR, "remote");
 
 
     public static void init() {
@@ -454,5 +456,17 @@ public class Repository {
             return false;
         }
         return val1.equals(val2);
+    }
+
+    public static void addRemote(String remoteName, String remotePath) {
+        new Remote(remoteName, remotePath);
+    }
+
+    public static void rmRemote(String remoteName) {
+        Remote.remove(remoteName);
+    }
+
+    public static void push(String remoteName, String branchName) {
+        Remote.push(remoteName, branchName);
     }
 }
