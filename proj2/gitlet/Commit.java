@@ -184,7 +184,11 @@ public class Commit implements Serializable {
         return currCommit.blobs;
     }
 
-    /** Get the blobs by the hash code of its commit. */
+    /** Get the blobs (can get by the hash code of its commit). */
+    public HashMap<String, String> getBlob() {
+        return this.blobs;
+    }
+
     public static HashMap<String, String> getBlob(String hash) {
         Commit currCommit = getCommit(hash);
         return currCommit.blobs;

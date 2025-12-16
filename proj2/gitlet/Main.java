@@ -134,6 +134,11 @@ public class Main {
                     }
                     Repository.push(args[1], args[2]);
                     break;
+                case "fetch":
+                    if (args.length != 3) {
+                        incorrectOps();
+                    }
+                    Repository.fetch(args[1], args[2]);
 
                 default:
                     System.out.println("No command with that name exists.");

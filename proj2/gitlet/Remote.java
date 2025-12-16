@@ -34,14 +34,9 @@ public class Remote {
     }
 
     public static void push(String remoteName, String branchName) {
-        File remoteConfig = join(REMOTE_DIR, remoteName);
-        if (!remoteConfig.exists()) {
+        File remotePath = remotePath(remoteName);
+        if (remotePath == null) {
             return;
-        }
-        String remotePathString = readContentsAsString(remoteConfig);
-        File remotePath = new File(remotePathString);
-        if (!remotePath.exists()) {
-            throw error("Remote directory not found.");
         }
         File remoteBranchFile = join(remotePath, "refs", "heads", branchName);
         if (!remoteBranchFile.exists()) {
@@ -52,14 +47,7 @@ public class Remote {
             }
             writeContents(remoteBranchFile, "");
         }
-        String remoteBranch = readContentsAsString(remoteBranchFile);
-        String remoteHash;
-        if (remoteBranch.isEmpty()) {
-            remoteHash = "";
-        } else {
-            File remoteCommit = join(remotePath, "objects", remoteBranch);
-            remoteHash = readContentsAsString(remoteCommit);
-        }
+        String remoteHash = readContentsAsString(remoteBranchFile);
         String currHash = Branch.currHash();
         Set<String> historyBuffer = commitCollector(currHash, remoteHash);
         if (historyBuffer == null) {
@@ -116,5 +104,81 @@ public class Remote {
             return historyBuffer;
         }
         return null;
+    }
+
+    public static void fetch(String remoteName, String branchName) {
+        File remotePath = remotePath(remoteName);
+        if (remotePath == null) {
+            return;
+        }
+        File remoteBranchFile = join(remotePath, "refs", "heads", branchName);
+        if (!remoteBranchFile.exists()) {
+            throw error("That remote does not have that branch.");
+        }
+        String remoteHash = readContentsAsString(remoteBranchFile);
+        Queue<String> queue = new LinkedList<>();
+        HashSet<String> prev = new HashSet<>();
+        queue.add(remoteHash);
+        prev.add(remoteHash);
+        while (!queue.isEmpty()) {
+            String hash = queue.remove();
+            File local = join(CM_DIR, hash);
+            if (local.exists()) {
+                return;
+            }
+            try {
+                local.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            File remote = join(remotePath, "objects", "commits", hash);
+            Commit commit = readObject(remote, Commit.class);
+            HashMap<String, String> remoteBlobs = commit.getBlob();
+            for (String blobNames : remoteBlobs.values()) {
+                File blob = join(OB_DIR, blobNames);
+                if (!blob.exists()) {
+                    File remoteBlob = join(remotePath, "objects", blobNames);
+                    byte[] blobContent = readContents(remoteBlob);
+                    try {
+                        blob.createNewFile();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    writeContents(blob, blobContent);
+                }
+            }
+            byte[] commitContent = readContents(remote);
+            writeContents(local, commitContent);
+            HashSet<String> parents = commit.getParentHash();
+            for (String pHash : parents) {
+                if (!prev.contains(pHash)) {
+                    prev.add(pHash);
+                    queue.add(pHash);
+                }
+            }
+        }
+        String localBranchName = remoteName + "/" + branchName;
+        File branchFile = join(HEAD_DIR, branchName);
+        if (!branchFile.exists()) {
+            try {
+                branchFile.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        Branch.update(localBranchName, remoteHash);
+    }
+
+    private static File remotePath(String remoteName) {
+        File remoteConfig = join(REMOTE_DIR, remoteName);
+        if (!remoteConfig.exists()) {
+            return null;
+        }
+        String remotePathString = readContentsAsString(remoteConfig);
+        File remotePath = new File(remotePathString);
+        if (!remotePath.exists()) {
+            throw error("Remote directory not found.");
+        }
+        return remotePath;
     }
 }

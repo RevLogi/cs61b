@@ -469,4 +469,8 @@ public class Repository {
     public static void push(String remoteName, String branchName) {
         Remote.push(remoteName, branchName);
     }
+
+    public static void fetch(String remoteName, String branchName) {
+        Remote.fetch(remoteName, branchName);
+    }
 }
