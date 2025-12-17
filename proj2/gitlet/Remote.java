@@ -75,7 +75,7 @@ public class Remote {
                 throw new RuntimeException(e);
             }
             File commit = join(CM_DIR, hash);
-            String content = readContentsAsString(commit);
+            byte[] content = readContents(commit);
             writeContents(copyCommit, content);
         }
         writeContents(remoteBranchFile, currHash);
