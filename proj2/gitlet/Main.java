@@ -140,6 +140,12 @@ public class Main {
                     }
                     Repository.fetch(args[1], args[2]);
                     break;
+                case "pull":
+                    if (args.length != 3) {
+                        incorrectOps();
+                    }
+                    Repository.pull(args[1], args[2]);
+                    break;
 
                 default:
                     System.out.println("No command with that name exists.");

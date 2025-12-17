@@ -473,4 +473,9 @@ public class Repository {
     public static void fetch(String remoteName, String branchName) {
         Remote.fetch(remoteName, branchName);
     }
+
+    public static void pull(String remoteName, String branchName) {
+        Remote.fetch(remoteName, branchName);
+        merge(remoteName + "/" + branchName);
+    }
 }
