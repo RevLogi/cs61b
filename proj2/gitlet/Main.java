@@ -139,6 +139,7 @@ public class Main {
                         incorrectOps();
                     }
                     Repository.fetch(args[1], args[2]);
+                    break;
 
                 default:
                     System.out.println("No command with that name exists.");
