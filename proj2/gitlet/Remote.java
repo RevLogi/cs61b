@@ -158,7 +158,7 @@ public class Remote {
             }
         }
         String localBranchName = remoteName + "/" + branchName;
-        File branchFile = join(HEAD_DIR, branchName);
+        File branchFile = join(HEAD_DIR, localBranchName);
         if (!branchFile.exists()) {
             try {
                 branchFile.createNewFile();
