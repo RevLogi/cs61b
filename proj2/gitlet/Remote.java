@@ -124,7 +124,7 @@ public class Remote {
             String hash = queue.remove();
             File local = join(CM_DIR, hash);
             if (local.exists()) {
-                return;
+                continue;
             }
             try {
                 local.createNewFile();
