@@ -159,6 +159,9 @@ public class Remote {
         }
         String localBranchName = remoteName + "/" + branchName;
         File remoteBranchDir = join(HEAD_DIR, remoteName);
+        if (!remoteBranchDir.exists()) {
+            remoteBranchDir.mkdirs();
+        }
         File branchFile = join(remoteBranchDir, branchName);
         if (!branchFile.exists()) {
             try {
